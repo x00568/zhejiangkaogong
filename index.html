@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>浙江公考助手 · 管理后台</title>
+
+  <!-- Element Plus 图标 + 组件库（jsDelivr CDN，国内外都通）-->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/element-plus"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+
+  <style>
+    :root {
+      --brand: #2b5cff;
+      --brand-2: #6a8bff;
+      --bg: #f4f6fb;
+      --sidebar-bg: #0f1938;
+      --sidebar-text: #cbd1e0;
+      --sidebar-active-bg: rgba(43, 92, 255, 0.15);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); }
+    #app { height: 100%; }
+
+    /* 登录页 */
+    .login-page {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a2b5e 0%, #2b5cff 100%);
+    }
+    .login-card {
+      width: 380px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px 32px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    }
+    .login-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1f2a4a;
+      text-align: center;
+      margin: 0 0 6px;
+    }
+    .login-sub {
+      color: #7d8291;
+      font-size: 13px;
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .login-hint {
+      background: #f6f8fd;
+      color: #7d8291;
+      font-size: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin-top: 16px;
+      line-height: 1.6;
+    }
+
+    /* 布局 */
+    .layout { display: flex; height: 100vh; }
+    .sidebar {
+      width: 220px;
+      background: var(--sidebar-bg);
+      color: var(--sidebar-text);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .sidebar-brand {
+      padding: 24px 20px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .sidebar-brand-sub {
+      font-size: 11px;
+      opacity: 0.6;
+      font-weight: 400;
+      margin-top: 4px;
+    }
+    .sidebar-menu { padding: 12px 0; flex: 1; }
+    .menu-item {
+      padding: 12px 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      transition: all 0.15s;
+      border-left: 3px solid transparent;
+    }
+    .menu-item:hover { background: rgba(255,255,255,0.04); }
+    .menu-item.active {
+      background: var(--sidebar-active-bg);
+      color: #fff;
+      border-left-color: var(--brand);
+    }
+    .menu-item .el-icon { font-size: 18px; }
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .content { flex: 1; overflow: auto; }
+    .topbar {
+      background: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #e6e8ee;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topbar-title { font-size: 18px; font-weight: 600; color: #1f2a4a; }
+    .role-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+    .role-admin { background: #eef2ff; color: var(--brand); }
+    .role-agent { background: #fff4e6; color: #ff8c00; }
+
+    .page-body { padding: 20px 24px; }
+
+    /* 卡片 */
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      margin-bottom: 16px;
+    }
+    .card-title { font-size: 15px; font-weight: 600; color: #1f2a4a; margin: 0 0 16px; }
+
+    /* dashboard */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .stat-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      right: -30px;
+      top: -30px;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      opacity: 0.08;
+    }
+    .stat-card.c1::after { background: #2b5cff; }
+    .stat-card.c2::after { background: #14b866; }
+    .stat-card.c3::after { background: #ff9500; }
+    .stat-card.c4::after { background: #ff4d4f; }
+    .stat-label { font-size: 13px; color: #7d8291; }
+    .stat-value { font-size: 32px; font-weight: 700; color: #1f2a4a; margin: 8px 0 4px; letter-spacing: -0.5px; }
+    .stat-trend { font-size: 12px; color: #14b866; }
+    .stat-trend.down { color: #ff4d4f; }
+
+    .chart-row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+    .chart-box { height: 320px; }
+
+    /* util */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .empty-cell { color: #b0b3bc; font-style: italic; }
+    .req-tag {
+      display: inline-block;
+      background: #f0f1f4;
+      color: #555;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin: 2px 4px 2px 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    const { createApp, ref, reactive, computed, onMounted, watch, nextTick } = Vue;
+    const { ElMessage, ElMessageBox, ElNotification } = ElementPlus;
+
+    // ============ 种子数据（首次加载时写入 localStorage） ============
+    const SEED_JOBS = [
+      { id: 'zj2026-001', updatedAt: '2026-07-24T08:00:00', title: '杭州市余杭区人民政府办公室 综合文字岗', unit: '杭州市余杭区人民政府办公室', type: '公务员', city: '杭州', headcount: 2, regStart: '2026-07-25T09:00:00', regEnd: '2026-08-01T18:00:00', examDate: '2026-09-13', requirements: { education: ['本科','硕士','博士'], degreeRequired: true, majors: ['汉语言文学','新闻学'], majorCategories: ['文学'], household: 'any', graduate: 'any', politicalStatus: 'any', grassrootsYears: 0 }, subjects: '行测 + 申论', hot: 8421, views: 3820 },
+      { id: 'zj2026-002', updatedAt: '2026-07-24T09:12:00', title: '宁波市镇海区财政局 财会审计岗', unit: '宁波市镇海区财政局', type: '公务员', city: '宁波', headcount: 1, regStart: '2026-07-26T09:00:00', regEnd: '2026-08-02T18:00:00', examDate: '2026-09-13', requirements: { education: ['本科','硕士'], degreeRequired: true, majors: ['会计学','审计学'], majorCategories: ['经济学'], household: 'zhejiang', graduate: 'any', politicalStatus: 'any', grassrootsYears: 0 }, subjects: '行测 + 申论', hot: 5232, views: 2104 },
+      { id: 'zj2026-003', updatedAt: '2026-07-24T10:35:00', title: '温州瓯海区教育局下属公办中学 语文教师', unit: '温州瓯海区教育局', type: '事业单位', city: '温州', headcount: 3, regStart: '2026-07-24T09:00:00', regEnd: '2026-07-30T17:00:00', examDate: '2026-08-24', requirements: { education: ['本科','硕士'], degreeRequired: true, majors: ['汉语言文学'], majorCategories: ['文学','教育学'], household: 'any', graduate: 'fresh', politicalStatus: 'any', grassrootsYears: 0, extra: '须持有高中语文教师资格证' }, subjects: '教育综合 + 学科', hot: 3980, views: 1420 },
+      { id: 'zj2026-005', updatedAt: '2026-07-23T11:20:00', title: '嘉兴市南湖区凤桥镇人民政府 基层岗', unit: '嘉兴市南湖区凤桥镇人民政府', type: '基层岗位', city: '嘉兴', headcount: 4, regStart: '2026-07-22T09:00:00', regEnd: '2026-07-28T18:00:00', examDate: '2026-08-17', requirements: { education: ['大专','本科'], degreeRequired: false, majors: [], majorCategories: [], household: 'zhejiang', graduate: 'any', politicalStatus: '党员', grassrootsYears: 0 }, subjects: '行测（乡镇卷）+ 申论', hot: 4102, views: 1602 }
+    ];
+    const SEED_RESOURCES = [
+      { id: 'r-001', title: '2026 浙江省考行测高分技巧合集（言语理解篇）', category: '公考干货', tag: '行测技巧', updatedAt: '2026-07-22T10:00:00', format: 'article', free: true, cost: 0, summary: '整理近5年浙江省考言语理解真题解题套路。', content: '', views: 3821, exchanges: 0 },
+      { id: 'r-002', title: '2020-2025 浙江省考申论真题+范文详解', category: '公考干货', tag: '申论范文', updatedAt: '2026-07-20T09:00:00', format: 'pdf', free: false, cost: 30, summary: '含 6 套真题、11 篇高分范文。', downloadUrl: 'https://example.com/x.pdf', views: 1523, exchanges: 87 },
+      { id: 'r-004', title: '浙江考编时间节点日历（2026 全年）', category: '报考指南', tag: '时间节点', updatedAt: '2026-07-10T09:00:00', format: 'article', free: true, cost: 0, summary: '浙江省考、事业编统考时间归纳。', content: '', views: 5642, exchanges: 0 },
+      { id: 'r-005', title: '结构化面试万能素材库（浙江专项）', category: '专项资料', tag: '面试素材', updatedAt: '2026-07-18T15:30:00', format: 'netdisk', free: false, cost: 50, summary: '覆盖社会热点、政策理论、名人金句。', netdisk: { url: 'https://pan.example.com/s/xxxxxx', code: 'zjgk' }, views: 892, exchanges: 42 }
+    ];
+    const SEED_USERS = Array.from({ length: 24 }, (_, i) => ({
+      id: 'u' + (10001 + i),
+      nick: ['小林','小陈','小王','小李','小刘','小赵','小周'][i % 7] + (i + 1),
+      registerAt: `2026-07-${String((i % 22) + 1).padStart(2,'0')}`,
+      profileComplete: Math.random() > 0.3,
+      points: Math.floor(Math.random() * 300),
+      lastActive: `2026-07-${20 + (i % 5)}`,
+      agentId: ['A01','A02','A03','A04','A05','A06'][i % 6],
+      education: ['本科','硕士','大专'][i % 3],
+      city: ['杭州','宁波','温州','绍兴','金华'][i % 5]
+    }));
+    const SEED_AGENTS = [
+      { id: 'A01', name: '一级代理·王', code: 'AG-WANG-01', enabled: true, createdAt: '2026-05-01' },
+      { id: 'A02', name: '一级代理·陈', code: 'AG-CHEN-02', enabled: true, createdAt: '2026-05-10' },
+      { id: 'A03', name: '一级代理·李', code: 'AG-LI-03',   enabled: true, createdAt: '2026-05-18' },
+      { id: 'A04', name: '一级代理·张', code: 'AG-ZHANG-04',enabled: true, createdAt: '2026-06-01' },
+      { id: 'A05', name: '一级代理·刘', code: 'AG-LIU-05',  enabled: false,createdAt: '2026-06-08' },
+      { id: 'A06', name: '一级代理·赵', code: 'AG-ZHAO-06', enabled: true, createdAt: '2026-06-20' }
+    ];
+    const SEED_POINTS_RULES = {
+      checkin: 5,
+      shareLimit: 3,
+      shareReward: 5,
+      inviteReward: 50,
+      firstProfileReward: 50,
+      unlockMatchCost: 20
+    };
+
+    const STORAGE_KEY = 'gongkao_admin_data_v1';
+
+    function loadData() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) { try { return JSON.parse(raw); } catch(e) {} }
+      return {
+        jobs: SEED_JOBS,
+        resources: SEED_RESOURCES,
+        users: SEED_USERS,
+        agents: SEED_AGENTS,
+        pointsRules: SEED_POINTS_RULES,
+        settings: { antiSpamMaxPerIp: 3, appName: '浙江公考助手', announcementBar: '' }
+      };
+    }
+    function saveData(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    // ============ 应用主体 ============
+    const App = {
+      setup() {
+        // ---- 登录状态 ----
+        const isLoggedIn = ref(false);
+        const currentRole = ref('admin'); // 'admin' | 'agent'
+        const currentAgentId = ref('A01');
+        const loginForm = reactive({ username: '', password: '' });
+
+        function doLogin() {
+          const { username, password } = loginForm;
+          if (username === 'admin' && password === 'admin') {
+            currentRole.value = 'admin';
+            isLoggedIn.value = true;
+            activeMenu.value = 'dashboard';
+            ElMessage.success('欢迎，超级管理员');
+          } else if (username.startsWith('agent') && password === 'agent') {
+            const idx = username.replace('agent', '') || '1';
+            currentAgentId.value = 'A0' + idx;
+            currentRole.value = 'agent';
+            isLoggedIn.value = true;
+            activeMenu.value = 'agent-self';
+            ElMessage.success('欢迎，' + currentAgentId.value);
+          } else {
+            ElMessage.error('账号或密码错误。试试 admin/admin 或 agent1/agent');
+          }
+        }
+        function logout() {
+          isLoggedIn.value = false;
+          loginForm.username = '';
+          loginForm.password = '';
+        }
+
+        // ---- 数据 ----
+        const data = reactive(loadData());
+        watch(data, () => saveData(data), { deep: true });
+
+        // ---- 菜单 ----
+        const activeMenu = ref('dashboard');
+        const adminMenus = [
+          { key: 'dashboard',  label: '数据总览', icon: 'DataAnalysis' },
+          { key: 'jobs',       label: '岗位管理', icon: 'Postcard' },
+          { key: 'resources',  label: '资料管理', icon: 'Document' },
+          { key: 'users',      label: '用户管理', icon: 'User' },
+          { key: 'points',     label: '积分规则', icon: 'Coin' },
+          { key: 'agents',     label: '代理管理', icon: 'Avatar' },
+          { key: 'settings',   label: '系统设置', icon: 'Setting' }
+        ];
+        const agentMenus = [
+          { key: 'agent-self', label: '我的数据', icon: 'DataAnalysis' }
+        ];
+        const menus = computed(() => currentRole.value === 'admin' ? adminMenus : agentMenus);
+        const pageTitle = computed(() => (menus.value.find(m => m.key === activeMenu.value) || {}).label || '');
+
+        // ---- Dashboard 统计 ----
+        const dashStats = computed(() => {
+          const users = data.users;
+          const jobs  = data.jobs;
+          const totalUsers = users.length;
+          const activeToday = Math.floor(totalUsers * 0.62);
+          const totalJobs = jobs.length;
+          const openJobs = jobs.filter(j => {
+            const now = Date.now();
+            return now >= new Date(j.regStart).getTime() && now <= new Date(j.regEnd).getTime();
+          }).length;
+          return { totalUsers, activeToday, totalJobs, openJobs };
+        });
+
+        // ECharts 实例
+        const trendChartRef = ref(null);
+        const pieChartRef = ref(null);
+        let trendChart, pieChart;
+
+        watch([activeMenu, isLoggedIn], async () => {
+          await nextTick();
+          if (activeMenu.value === 'dashboard' && isLoggedIn.value && currentRole.value === 'admin') {
+            renderCharts();
+          } else if (activeMenu.value === 'agent-self' && isLoggedIn.value) {
+            await nextTick();
+            renderAgentChart();
+          }
+        });
+
+        function renderCharts() {
+          if (!trendChartRef.value || !pieChartRef.value) return;
+          trendChart && trendChart.dispose();
+          pieChart  && pieChart.dispose();
+          trendChart = echarts.init(trendChartRef.value);
+          pieChart   = echarts.init(pieChartRef.value);
+
+          const days = Array.from({ length: 14 }, (_, i) => {
+            const d = new Date(Date.now() - (13 - i) * 86400000);
+            return `${d.getMonth() + 1}/${d.getDate()}`;
+          });
+          const newUsers = days.map(() => Math.floor(20 + Math.random() * 80));
+          const activeUsers = days.map(v => Math.floor(v * 3 + Math.random() * 50));
+
+          trendChart.setOption({
+            tooltip: { trigger: 'axis' },
+            legend: { data: ['新增用户','活跃用户'], right: 10 },
+            grid: { left: 40, right: 20, top: 40, bottom: 30 },
+            xAxis: { type: 'category', data: days, axisLine: { lineStyle: { color: '#e6e8ee' }}},
+            yAxis: { type: 'value', splitLine: { lineStyle: { color: '#f0f1f4' }}},
+            series: [
+              { name: '新增用户', type: 'line', smooth: true, data: newUsers, itemStyle: { color: '#2b5cff' }, areaStyle: { color: 'rgba(43,92,255,0.1)' }},
+              { name: '活跃用户', type: 'line', smooth: true, data: activeUsers, itemStyle: { color: '#14b866' }}
+            ]
+          });
+
+          // 分类饼图（岗位类型分布）
+          const typeCount = {};
+          data.jobs.forEach(j => { typeCount[j.type] = (typeCount[j.type] || 0) + 1; });
+          pieChart.setOption({
+            tooltip: { trigger: 'item' },
+            legend: { bottom: 0 },
+            series: [{
+              type: 'pie',
+              radius: ['45%', '70%'],
+              center: ['50%', '45%'],
+              data: Object.entries(typeCount).map(([k, v]) => ({ name: k, value: v })),
+              label: { formatter: '{b}: {c}' }
+            }],
+            color: ['#2b5cff','#14b866','#ff9500','#ff4d4f','#7d8291']
+          });
+        }
+
+        function renderAgentChart() {
+          const el = document.getElementById('agentChart');
+          if (!el) return;
+          const chart = echarts.init(el);
+          const users = data.users.filter(u => u.agentId === currentAgentId.value);
+          chart.setOption({
+            tooltip: {},
+            grid: { top: 30, left: 40, right: 20, bottom: 30 },
+            xAxis: { type: 'category', data: ['引流用户','已完善档案','近7日活跃','付费转化'] },
+            yAxis: { type: 'value' },
+            series: [{
+              type: 'bar',
+              data: [users.length, users.filter(u => u.profileComplete).length, Math.floor(users.length * 0.55), Math.floor(users.length * 0.15)],
+              itemStyle: { color: '#2b5cff' },
+              barMaxWidth: 40
+            }]
+          });
+        }
+
+        // ---- 岗位管理 ----
+        const jobDialog = reactive({ visible: false, isEdit: false, form: newJobForm() });
+        function newJobForm() {
+          return {
+            id: '', title: '', unit: '', type: '公务员', city: '杭州',
+            headcount: 1, regStart: '', regEnd: '', examDate: '',
+            requirements: { education: ['本科'], degreeRequired: true, majors: [], majorCategories: [], household: 'any', graduate: 'any', politicalStatus: 'any', grassrootsYears: 0 },
+            subjects: '行测 + 申论', hot: 0, views: 0
+          };
+        }
+        function openAddJob() {
+          jobDialog.form = newJobForm();
+          jobDialog.form.id = 'zj' + Date.now();
+          jobDialog.form.updatedAt = new Date().toISOString();
+          jobDialog.isEdit = false;
+          jobDialog.visible = true;
+        }
+        function openEditJob(row) {
+          jobDialog.form = JSON.parse(JSON.stringify(row));
+          jobDialog.isEdit = true;
+          jobDialog.visible = true;
+        }
+        function saveJob() {
+          const f = jobDialog.form;
+          if (!f.title || !f.unit) return ElMessage.warning('岗位名和单位必填');
+          f.updatedAt = new Date().toISOString();
+          if (jobDialog.isEdit) {
+            const idx = data.jobs.findIndex(j => j.id === f.id);
+            if (idx >= 0) data.jobs.splice(idx, 1, f);
+          } else {
+            data.jobs.unshift(f);
+          }
+          jobDialog.visible = false;
+          ElMessage.success('已保存');
+        }
+        function deleteJob(row) {
+          ElMessageBox.confirm(`删除岗位「${row.title}」？`, '确认', { type: 'warning' })
+            .then(() => {
+              const idx = data.jobs.findIndex(j => j.id === row.id);
+              if (idx >= 0) data.jobs.splice(idx, 1);
+              ElMessage.success('已删除');
+            }).catch(() => {});
+        }
+        function jobStatusLabel(row) {
+          const now = Date.now();
+          const s = new Date(row.regStart).getTime();
+          const e = new Date(row.regEnd).getTime();
+          if (now < s) return { text: '即将开始', type: 'warning' };
+          if (now > e) return { text: '已结束',   type: 'info' };
+          return { text: '报名中', type: 'success' };
+        }
+
+        // 岗位搜索
+        const jobKw = ref('');
+        const filteredJobs = computed(() => {
+          const kw = jobKw.value.trim();
+          if (!kw) return data.jobs;
+          return data.jobs.filter(j => (j.title + j.unit + j.city).includes(kw));
+        });
+
+        // ---- 资料管理 ----
+        const resDialog = reactive({ visible: false, isEdit: false, form: newResForm() });
+        function newResForm() {
+          return { id: '', title: '', category: '公考干货', tag: '', format: 'article', free: true, cost: 0, summary: '', content: '', downloadUrl: '', netdisk: { url: '', code: '' }, updatedAt: '', views: 0, exchanges: 0 };
+        }
+        function openAddRes() {
+          resDialog.form = newResForm();
+          resDialog.form.id = 'r-' + Date.now();
+          resDialog.isEdit = false;
+          resDialog.visible = true;
+        }
+        function openEditRes(row) {
+          resDialog.form = JSON.parse(JSON.stringify(row));
+          resDialog.isEdit = true;
+          resDialog.visible = true;
+        }
+        function saveRes() {
+          const f = resDialog.form;
+          if (!f.title) return ElMessage.warning('标题必填');
+          f.updatedAt = new Date().toISOString();
+          if (resDialog.isEdit) {
+            const idx = data.resources.findIndex(r => r.id === f.id);
+            if (idx >= 0) data.resources.splice(idx, 1, f);
+          } else {
+            data.resources.unshift(f);
+          }
+          resDialog.visible = false;
+          ElMessage.success('已保存');
+        }
+        function deleteRes(row) {
+          ElMessageBox.confirm(`删除资料「${row.title}」？`, '确认', { type: 'warning' })
+            .then(() => {
+              const idx = data.resources.findIndex(r => r.id === row.id);
+              if (idx >= 0) data.resources.splice(idx, 1);
+              ElMessage.success('已删除');
+            }).catch(() => {});
+        }
+
+        // ---- 用户管理 ----
+        const userSearchKw = ref('');
+        const userAgentFilter = ref('');
+        const filteredUsers = computed(() => {
+          return data.users.filter(u => {
+            if (userSearchKw.value && !(u.nick + u.id).includes(userSearchKw.value)) return false;
+            if (userAgentFilter.value && u.agentId !== userAgentFilter.value) return false;
+            return true;
+          });
+        });
+        function adjustPoints(user) {
+          ElMessageBox.prompt(`调整用户「${user.nick}」的积分（当前 ${user.points}）`, '积分调整', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            inputPlaceholder: '正数增加，负数扣减，例如 +30 或 -10',
+            inputPattern: /^-?\d+$/,
+            inputErrorMessage: '请输入整数'
+          }).then(({ value }) => {
+            const delta = parseInt(value);
+            user.points = Math.max(0, user.points + delta);
+            ElMessage.success(`已调整 ${delta > 0 ? '+' : ''}${delta} 积分`);
+          }).catch(() => {});
+        }
+        function toggleUserStatus(user) {
+          user.disabled = !user.disabled;
+          ElMessage.success(user.disabled ? '已禁用' : '已启用');
+        }
+
+        // ---- 代理 ----
+        const agentDialog = reactive({ visible: false, form: { id:'', name:'', code:'', enabled:true } });
+        function openAddAgent() {
+          const nextIdx = data.agents.length + 1;
+          agentDialog.form = { id: 'A' + String(nextIdx).padStart(2,'0'), name: '一级代理', code: 'AG-' + Date.now().toString(36).toUpperCase(), enabled: true, createdAt: new Date().toISOString().slice(0,10) };
+          agentDialog.visible = true;
+        }
+        function saveAgent() {
+          if (!agentDialog.form.name) return ElMessage.warning('姓名必填');
+          data.agents.push({ ...agentDialog.form });
+          agentDialog.visible = false;
+          ElMessage.success('代理已创建');
+        }
+        function toggleAgent(a) {
+          a.enabled = !a.enabled;
+          ElMessage.success(a.enabled ? '已启用' : '已禁用');
+        }
+        function agentStats(agentId) {
+          const users = data.users.filter(u => u.agentId === agentId);
+          return {
+            users: users.length,
+            completed: users.filter(u => u.profileComplete).length,
+            points: users.reduce((s, u) => s + u.points, 0)
+          };
+        }
+
+        function onImportExcel() {
+          ElNotification({
+            title: 'Excel 导入',
+            message: '接口已预留，需要后端上传解析。演示环境请直接用「新增岗位」逐条添加，或用「导出 data.js」批改后再回来重置数据。',
+            type: 'info',
+            duration: 5000
+          });
+        }
+
+        // ---- 导出 data.js ----
+        function exportDataJs() {
+          const jobsJs = `// data/jobs.js —— 从管理后台导出于 ${new Date().toISOString()}\n\nconst CITIES = ['杭州','宁波','温州','嘉兴','湖州','绍兴','金华','衢州','舟山','台州','丽水'];\n\nconst JOBS = ${JSON.stringify(data.jobs, null, 2)};\n\nmodule.exports = { JOBS, CITIES };\n`;
+          const resJs  = `// data/resources.js —— 从管理后台导出于 ${new Date().toISOString()}\n\nconst RESOURCES = ${JSON.stringify(data.resources, null, 2)};\n\nconst CATEGORIES = ['全部','公考干货','事业编资料','报考指南','专项资料'];\n\nmodule.exports = { RESOURCES, CATEGORIES };\n`;
+          downloadTxt('jobs.js', jobsJs);
+          setTimeout(() => downloadTxt('resources.js', resJs), 300);
+          ElNotification({ title: '导出完成', message: '请把两个文件覆盖 gongkao-miniprogram/data/ 目录', type: 'success' });
+        }
+        function downloadTxt(filename, content) {
+          const blob = new Blob([content], { type: 'text/javascript;charset=utf-8' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = filename;
+          a.click();
+          URL.revokeObjectURL(a.href);
+        }
+
+        // ---- 重置 ----
+        function resetAllData() {
+          ElMessageBox.confirm('这会清空管理端所有本地数据，回到种子数据。继续？', '危险操作', { type: 'error' })
+            .then(() => {
+              localStorage.removeItem(STORAGE_KEY);
+              location.reload();
+            }).catch(() => {});
+        }
+
+        return {
+          // login
+          isLoggedIn, loginForm, doLogin, logout, currentRole, currentAgentId,
+          // layout
+          activeMenu, menus, pageTitle,
+          // data
+          data,
+          // dashboard
+          dashStats, trendChartRef, pieChartRef,
+          // jobs
+          jobDialog, openAddJob, openEditJob, saveJob, deleteJob, jobStatusLabel, jobKw, filteredJobs,
+          // resources
+          resDialog, openAddRes, openEditRes, saveRes, deleteRes,
+          // users
+          userSearchKw, userAgentFilter, filteredUsers, adjustPoints, toggleUserStatus,
+          // agents
+          agentDialog, openAddAgent, saveAgent, toggleAgent, agentStats,
+          // misc
+          exportDataJs, resetAllData, onImportExcel
+        };
+      },
+
+      template: `
+        <!-- ============ 登录页 ============ -->
+        <div v-if="!isLoggedIn" class="login-page">
+          <div class="login-card">
+            <h1 class="login-title">浙江公考助手</h1>
+            <div class="login-sub">管理后台 · Admin Console</div>
+            <el-form :model="loginForm" @submit.prevent="doLogin">
+              <el-form-item>
+                <el-input v-model="loginForm.username" placeholder="账号" size="large" @keyup.enter="doLogin"/>
+              </el-form-item>
+              <el-form-item>
+                <el-input v-model="loginForm.password" placeholder="密码" size="large" show-password @keyup.enter="doLogin"/>
+              </el-form-item>
+              <el-button type="primary" size="large" style="width:100%" @click="doLogin">登 录</el-button>
+            </el-form>
+            <div class="login-hint">
+              演示账号：<br/>
+              · <b>admin / admin</b> —— 超级管理员，全部权限<br/>
+              · <b>agent1 ~ agent6 / agent</b> —— 一级代理，只看自己渠道
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ 主布局 ============ -->
+        <div v-else class="layout">
+          <aside class="sidebar">
+            <div class="sidebar-brand">
+              浙江公考助手
+              <div class="sidebar-brand-sub">Admin Console v1</div>
+            </div>
+            <div class="sidebar-menu">
+              <div v-for="m in menus" :key="m.key"
+                   class="menu-item" :class="{ active: activeMenu === m.key }"
+                   @click="activeMenu = m.key">
+                <el-icon><component :is="m.icon"/></el-icon>
+                {{ m.label }}
+              </div>
+            </div>
+            <div class="sidebar-footer">
+              当前身份：{{ currentRole === 'admin' ? '超级管理员' : currentAgentId }}<br/>
+              <el-link type="danger" :underline="false" @click="logout" style="color:#ff8a8a">退出登录</el-link>
+            </div>
+          </aside>
+
+          <main class="content">
+            <div class="topbar">
+              <div class="topbar-title">
+                {{ pageTitle }}
+                <span class="role-badge" :class="'role-' + currentRole">
+                  {{ currentRole === 'admin' ? '超级管理员' : '一级代理' }}
+                </span>
+              </div>
+              <div>
+                <el-button v-if="currentRole === 'admin'" @click="exportDataJs" :icon="'Download'">
+                  导出 data.js
+                </el-button>
+                <el-button v-if="currentRole === 'admin'" type="danger" plain size="small" @click="resetAllData">
+                  重置演示数据
+                </el-button>
+              </div>
+            </div>
+
+            <div class="page-body">
+
+              <!-- ============ 数据总览（超管） ============ -->
+              <template v-if="activeMenu === 'dashboard'">
+                <div class="stat-grid">
+                  <div class="stat-card c1">
+                    <div class="stat-label">累计注册用户</div>
+                    <div class="stat-value">{{ dashStats.totalUsers }}</div>
+                    <div class="stat-trend">↑ 12.4% 较上周</div>
+                  </div>
+                  <div class="stat-card c2">
+                    <div class="stat-label">今日活跃用户</div>
+                    <div class="stat-value">{{ dashStats.activeToday }}</div>
+                    <div class="stat-trend">↑ 8.1%</div>
+                  </div>
+                  <div class="stat-card c3">
+                    <div class="stat-label">在库岗位</div>
+                    <div class="stat-value">{{ dashStats.totalJobs }}</div>
+                    <div class="stat-trend">今日新增 3</div>
+                  </div>
+                  <div class="stat-card c4">
+                    <div class="stat-label">报名中岗位</div>
+                    <div class="stat-value">{{ dashStats.openJobs }}</div>
+                    <div class="stat-trend down">↓ 2 结束</div>
+                  </div>
+                </div>
+
+                <div class="chart-row">
+                  <div class="card">
+                    <div class="card-title">近 14 天用户趋势</div>
+                    <div ref="trendChartRef" class="chart-box"></div>
+                  </div>
+                  <div class="card">
+                    <div class="card-title">岗位类型分布</div>
+                    <div ref="pieChartRef" class="chart-box"></div>
+                  </div>
+                </div>
+              </template>
+
+              <!-- ============ 岗位管理 ============ -->
+              <template v-if="activeMenu === 'jobs'">
+                <div class="card">
+                  <div class="toolbar">
+                    <div style="display:flex;gap:12px;align-items:center;">
+                      <el-input v-model="jobKw" placeholder="搜索岗位/单位/城市" style="width:260px" clearable :prefix-icon="'Search'"/>
+                      <span style="color:#7d8291;font-size:13px">共 {{ filteredJobs.length }} 条</span>
+                    </div>
+                    <div>
+                      <el-button @click="onImportExcel">Excel 批量导入</el-button>
+                      <el-button type="primary" :icon="'Plus'" @click="openAddJob">新增岗位</el-button>
+                    </div>
+                  </div>
+
+                  <el-table :data="filteredJobs" border stripe max-height="600">
+                    <el-table-column label="岗位名称" min-width="240">
+                      <template #default="{ row }">
+                        <b>{{ row.title }}</b>
+                        <div style="color:#7d8291;font-size:12px;margin-top:4px">{{ row.unit }}</div>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="地市" prop="city" width="80"/>
+                    <el-table-column label="类型" prop="type" width="100"/>
+                    <el-table-column label="学历" width="150">
+                      <template #default="{ row }">
+                        <span v-for="e in row.requirements.education" :key="e" class="req-tag">{{ e }}</span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="招录" prop="headcount" width="70"/>
+                    <el-table-column label="报名截止" width="150">
+                      <template #default="{ row }">{{ row.regEnd.slice(0,10) }}</template>
+                    </el-table-column>
+                    <el-table-column label="状态" width="100">
+                      <template #default="{ row }">
+                        <el-tag :type="jobStatusLabel(row).type" size="small">{{ jobStatusLabel(row).text }}</el-tag>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="操作" width="160" fixed="right">
+                      <template #default="{ row }">
+                        <el-button link type="primary" @click="openEditJob(row)">编辑</el-button>
+                        <el-button link type="danger" @click="deleteJob(row)">删除</el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+
+                <el-dialog v-model="jobDialog.visible" :title="jobDialog.isEdit ? '编辑岗位' : '新增岗位'" width="720px">
+                  <el-form :model="jobDialog.form" label-width="100px">
+                    <el-form-item label="岗位名称"><el-input v-model="jobDialog.form.title"/></el-form-item>
+                    <el-form-item label="招录单位"><el-input v-model="jobDialog.form.unit"/></el-form-item>
+                    <el-form-item label="类型">
+                      <el-select v-model="jobDialog.form.type">
+                        <el-option v-for="t in ['公务员','事业单位','国企','基层岗位','三支一扶']" :key="t" :label="t" :value="t"/>
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item label="所属地市">
+                      <el-select v-model="jobDialog.form.city">
+                        <el-option v-for="c in ['杭州','宁波','温州','嘉兴','湖州','绍兴','金华','衢州','舟山','台州','丽水']" :key="c" :label="c" :value="c"/>
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item label="招录人数"><el-input-number v-model="jobDialog.form.headcount" :min="1"/></el-form-item>
+                    <el-form-item label="学历要求">
+                      <el-checkbox-group v-model="jobDialog.form.requirements.education">
+                        <el-checkbox label="大专" value="大专"/>
+                        <el-checkbox label="本科" value="本科"/>
+                        <el-checkbox label="硕士" value="硕士"/>
+                        <el-checkbox label="博士" value="博士"/>
+                      </el-checkbox-group>
+                    </el-form-item>
+                    <el-form-item label="需要学位"><el-switch v-model="jobDialog.form.requirements.degreeRequired"/></el-form-item>
+                    <el-form-item label="专业列表">
+                      <el-select v-model="jobDialog.form.requirements.majors" multiple filterable allow-create default-first-option style="width:100%" placeholder="输入专业按回车添加，或留空表示不限"/>
+                    </el-form-item>
+                    <el-form-item label="户籍要求">
+                      <el-radio-group v-model="jobDialog.form.requirements.household">
+                        <el-radio value="any">不限</el-radio>
+                        <el-radio value="zhejiang">浙江户籍</el-radio>
+                        <el-radio value="non-zhejiang">非浙江户籍</el-radio>
+                      </el-radio-group>
+                    </el-form-item>
+                    <el-form-item label="应届要求">
+                      <el-radio-group v-model="jobDialog.form.requirements.graduate">
+                        <el-radio value="any">不限</el-radio>
+                        <el-radio value="fresh">仅应届</el-radio>
+                        <el-radio value="past">仅往届</el-radio>
+                      </el-radio-group>
+                    </el-form-item>
+                    <el-form-item label="报名开始"><el-input v-model="jobDialog.form.regStart" placeholder="YYYY-MM-DDTHH:MM:SS"/></el-form-item>
+                    <el-form-item label="报名结束"><el-input v-model="jobDialog.form.regEnd" placeholder="YYYY-MM-DDTHH:MM:SS"/></el-form-item>
+                    <el-form-item label="考试日期"><el-input v-model="jobDialog.form.examDate" placeholder="YYYY-MM-DD"/></el-form-item>
+                    <el-form-item label="考试科目"><el-input v-model="jobDialog.form.subjects"/></el-form-item>
+                  </el-form>
+                  <template #footer>
+                    <el-button @click="jobDialog.visible = false">取消</el-button>
+                    <el-button type="primary" @click="saveJob">保存</el-button>
+                  </template>
+                </el-dialog>
+              </template>
+
+              <!-- ============ 资料管理 ============ -->
+              <template v-if="activeMenu === 'resources'">
+                <div class="card">
+                  <div class="toolbar">
+                    <span style="color:#7d8291">共 {{ data.resources.length }} 条资料</span>
+                    <el-button type="primary" :icon="'Plus'" @click="openAddRes">新增资料</el-button>
+                  </div>
+                  <el-table :data="data.resources" border stripe>
+                    <el-table-column label="标题" prop="title" min-width="260"/>
+                    <el-table-column label="分类" prop="category" width="120"/>
+                    <el-table-column label="标签" prop="tag" width="120"/>
+                    <el-table-column label="格式" width="90">
+                      <template #default="{ row }">
+                        <el-tag size="small" :type="row.format === 'pdf' ? 'warning' : row.format === 'netdisk' ? 'success' : ''">
+                          {{ row.format === 'pdf' ? 'PDF' : row.format === 'netdisk' ? '网盘' : '图文' }}
+                        </el-tag>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="权限" width="120">
+                      <template #default="{ row }">
+                        <el-tag size="small" :type="row.free ? 'success' : 'primary'">
+                          {{ row.free ? '免费' : row.cost + ' 积分' }}
+                        </el-tag>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="浏览" prop="views" width="80"/>
+                    <el-table-column label="兑换" prop="exchanges" width="80"/>
+                    <el-table-column label="操作" width="160" fixed="right">
+                      <template #default="{ row }">
+                        <el-button link type="primary" @click="openEditRes(row)">编辑</el-button>
+                        <el-button link type="danger"  @click="deleteRes(row)">删除</el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+
+                <el-dialog v-model="resDialog.visible" :title="resDialog.isEdit ? '编辑资料' : '新增资料'" width="640px">
+                  <el-form :model="resDialog.form" label-width="90px">
+                    <el-form-item label="标题"><el-input v-model="resDialog.form.title"/></el-form-item>
+                    <el-form-item label="分类">
+                      <el-select v-model="resDialog.form.category">
+                        <el-option v-for="c in ['公考干货','事业编资料','报考指南','专项资料']" :key="c" :label="c" :value="c"/>
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item label="标签"><el-input v-model="resDialog.form.tag" placeholder="如：行测技巧"/></el-form-item>
+                    <el-form-item label="格式">
+                      <el-radio-group v-model="resDialog.form.format">
+                        <el-radio value="article">图文</el-radio>
+                        <el-radio value="pdf">PDF</el-radio>
+                        <el-radio value="netdisk">网盘</el-radio>
+                      </el-radio-group>
+                    </el-form-item>
+                    <el-form-item label="权限">
+                      <el-radio-group v-model="resDialog.form.free">
+                        <el-radio :value="true">免费</el-radio>
+                        <el-radio :value="false">积分兑换</el-radio>
+                      </el-radio-group>
+                    </el-form-item>
+                    <el-form-item label="兑换积分" v-if="!resDialog.form.free">
+                      <el-input-number v-model="resDialog.form.cost" :min="0"/>
+                    </el-form-item>
+                    <el-form-item label="简介"><el-input v-model="resDialog.form.summary" type="textarea" :rows="2"/></el-form-item>
+                    <el-form-item label="正文" v-if="resDialog.form.format === 'article'">
+                      <el-input v-model="resDialog.form.content" type="textarea" :rows="6"/>
+                    </el-form-item>
+                    <el-form-item label="下载 URL" v-if="resDialog.form.format === 'pdf'">
+                      <el-input v-model="resDialog.form.downloadUrl"/>
+                    </el-form-item>
+                    <template v-if="resDialog.form.format === 'netdisk'">
+                      <el-form-item label="网盘链接"><el-input v-model="resDialog.form.netdisk.url"/></el-form-item>
+                      <el-form-item label="提取码"><el-input v-model="resDialog.form.netdisk.code"/></el-form-item>
+                    </template>
+                  </el-form>
+                  <template #footer>
+                    <el-button @click="resDialog.visible = false">取消</el-button>
+                    <el-button type="primary" @click="saveRes">保存</el-button>
+                  </template>
+                </el-dialog>
+              </template>
+
+              <!-- ============ 用户管理 ============ -->
+              <template v-if="activeMenu === 'users'">
+                <div class="card">
+                  <div class="toolbar">
+                    <div style="display:flex;gap:12px">
+                      <el-input v-model="userSearchKw" placeholder="搜索昵称/ID" style="width:200px" clearable/>
+                      <el-select v-model="userAgentFilter" placeholder="按代理筛选" clearable style="width:180px">
+                        <el-option v-for="a in data.agents" :key="a.id" :label="a.name + ' (' + a.id + ')'" :value="a.id"/>
+                      </el-select>
+                    </div>
+                    <span style="color:#7d8291">共 {{ filteredUsers.length }} 人</span>
+                  </div>
+                  <el-table :data="filteredUsers" border stripe max-height="600">
+                    <el-table-column label="用户ID" prop="id" width="90"/>
+                    <el-table-column label="昵称" prop="nick" width="100"/>
+                    <el-table-column label="学历" prop="education" width="80"/>
+                    <el-table-column label="意向城市" prop="city" width="90"/>
+                    <el-table-column label="档案" width="80">
+                      <template #default="{ row }">
+                        <el-tag size="small" :type="row.profileComplete ? 'success' : 'info'">
+                          {{ row.profileComplete ? '已完善' : '未完善' }}
+                        </el-tag>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="积分" prop="points" width="80"/>
+                    <el-table-column label="所属代理" prop="agentId" width="100"/>
+                    <el-table-column label="注册时间" prop="registerAt" width="120"/>
+                    <el-table-column label="最后活跃" prop="lastActive" width="120"/>
+                    <el-table-column label="操作" width="200" fixed="right">
+                      <template #default="{ row }">
+                        <el-button link type="primary" @click="adjustPoints(row)">调整积分</el-button>
+                        <el-button link :type="row.disabled ? 'success' : 'danger'" @click="toggleUserStatus(row)">
+                          {{ row.disabled ? '启用' : '禁用' }}
+                        </el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+              </template>
+
+              <!-- ============ 积分规则 ============ -->
+              <template v-if="activeMenu === 'points'">
+                <div class="card" style="max-width:640px">
+                  <div class="card-title">积分获取规则</div>
+                  <el-form :model="data.pointsRules" label-width="180px">
+                    <el-form-item label="每日签到奖励">
+                      <el-input-number v-model="data.pointsRules.checkin" :min="0"/> 积分/次
+                    </el-form-item>
+                    <el-form-item label="分享奖励">
+                      <el-input-number v-model="data.pointsRules.shareReward" :min="0"/> 积分/次
+                    </el-form-item>
+                    <el-form-item label="每日分享次数上限">
+                      <el-input-number v-model="data.pointsRules.shareLimit" :min="0"/> 次
+                    </el-form-item>
+                    <el-form-item label="邀请新用户奖励">
+                      <el-input-number v-model="data.pointsRules.inviteReward" :min="0"/> 积分/人
+                    </el-form-item>
+                    <el-form-item label="首次完善档案奖励">
+                      <el-input-number v-model="data.pointsRules.firstProfileReward" :min="0"/> 积分
+                    </el-form-item>
+                  </el-form>
+                </div>
+                <div class="card" style="max-width:640px">
+                  <div class="card-title">积分消耗配置</div>
+                  <el-form :model="data.pointsRules" label-width="180px">
+                    <el-form-item label="解锁额外匹配次数">
+                      <el-input-number v-model="data.pointsRules.unlockMatchCost" :min="0"/> 积分/次
+                    </el-form-item>
+                    <div style="color:#7d8291;font-size:12px;padding-left:180px">
+                      资料兑换积分数在「资料管理」里逐个设置
+                    </div>
+                  </el-form>
+                </div>
+              </template>
+
+              <!-- ============ 代理管理 ============ -->
+              <template v-if="activeMenu === 'agents'">
+                <div class="card">
+                  <div class="toolbar">
+                    <span style="color:#7d8291">共 {{ data.agents.length }} 个一级代理</span>
+                    <el-button type="primary" :icon="'Plus'" @click="openAddAgent">新增代理</el-button>
+                  </div>
+                  <el-table :data="data.agents" border stripe>
+                    <el-table-column label="ID" prop="id" width="80"/>
+                    <el-table-column label="姓名" prop="name" width="180"/>
+                    <el-table-column label="推广码" prop="code" width="200"/>
+                    <el-table-column label="旗下用户">
+                      <template #default="{ row }">{{ agentStats(row.id).users }}</template>
+                    </el-table-column>
+                    <el-table-column label="已完善">
+                      <template #default="{ row }">{{ agentStats(row.id).completed }}</template>
+                    </el-table-column>
+                    <el-table-column label="累计积分">
+                      <template #default="{ row }">{{ agentStats(row.id).points }}</template>
+                    </el-table-column>
+                    <el-table-column label="创建时间" prop="createdAt" width="120"/>
+                    <el-table-column label="状态" width="90">
+                      <template #default="{ row }">
+                        <el-tag :type="row.enabled ? 'success' : 'info'" size="small">
+                          {{ row.enabled ? '启用' : '禁用' }}
+                        </el-tag>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="操作" width="120">
+                      <template #default="{ row }">
+                        <el-button link :type="row.enabled ? 'danger' : 'success'" @click="toggleAgent(row)">
+                          {{ row.enabled ? '禁用' : '启用' }}
+                        </el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+
+                <el-dialog v-model="agentDialog.visible" title="新增一级代理" width="440px">
+                  <el-form :model="agentDialog.form" label-width="90px">
+                    <el-form-item label="姓名"><el-input v-model="agentDialog.form.name"/></el-form-item>
+                    <el-form-item label="推广码"><el-input v-model="agentDialog.form.code"/></el-form-item>
+                    <el-form-item label="启用"><el-switch v-model="agentDialog.form.enabled"/></el-form-item>
+                  </el-form>
+                  <template #footer>
+                    <el-button @click="agentDialog.visible = false">取消</el-button>
+                    <el-button type="primary" @click="saveAgent">保存</el-button>
+                  </template>
+                </el-dialog>
+              </template>
+
+              <!-- ============ 系统设置 ============ -->
+              <template v-if="activeMenu === 'settings'">
+                <div class="card" style="max-width:640px">
+                  <div class="card-title">基础设置</div>
+                  <el-form :model="data.settings" label-width="180px">
+                    <el-form-item label="小程序名称"><el-input v-model="data.settings.appName"/></el-form-item>
+                    <el-form-item label="全局公告栏">
+                      <el-input v-model="data.settings.announcementBar" placeholder="留空则不展示"/>
+                    </el-form-item>
+                    <el-form-item label="防刷：单 IP 每日上限">
+                      <el-input-number v-model="data.settings.antiSpamMaxPerIp" :min="1"/> 次
+                    </el-form-item>
+                  </el-form>
+                </div>
+                <div class="card" style="max-width:640px">
+                  <div class="card-title">数据导出</div>
+                  <div style="color:#7d8291;font-size:13px;line-height:1.6;margin-bottom:16px">
+                    把当前岗位和资料数据导出为 <code>jobs.js</code> / <code>resources.js</code>，
+                    覆盖到 <code>gongkao-miniprogram/data/</code> 目录，小程序即可读取到最新内容。
+                    正式部署后端后，这个功能可以移除。
+                  </div>
+                  <el-button type="primary" :icon="'Download'" @click="exportDataJs">导出 data.js</el-button>
+                </div>
+              </template>
+
+              <!-- ============ 代理侧：我的数据 ============ -->
+              <template v-if="activeMenu === 'agent-self'">
+                <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+                  <div class="stat-card c1">
+                    <div class="stat-label">我的引流用户</div>
+                    <div class="stat-value">{{ agentStats(currentAgentId).users }}</div>
+                  </div>
+                  <div class="stat-card c2">
+                    <div class="stat-label">完善档案</div>
+                    <div class="stat-value">{{ agentStats(currentAgentId).completed }}</div>
+                  </div>
+                  <div class="stat-card c3">
+                    <div class="stat-label">累计积分</div>
+                    <div class="stat-value">{{ agentStats(currentAgentId).points }}</div>
+                  </div>
+                  <div class="stat-card c4">
+                    <div class="stat-label">近7日活跃</div>
+                    <div class="stat-value">{{ Math.floor(agentStats(currentAgentId).users * 0.55) }}</div>
+                  </div>
+                </div>
+
+                <div class="card">
+                  <div class="card-title">我的用户数据</div>
+                  <div id="agentChart" style="height:280px"></div>
+                </div>
+
+                <div class="card">
+                  <div class="card-title">我的学员台账</div>
+                  <el-table :data="data.users.filter(u => u.agentId === currentAgentId)" border stripe max-height="500">
+                    <el-table-column label="ID" prop="id" width="90"/>
+                    <el-table-column label="昵称" prop="nick" width="100"/>
+                    <el-table-column label="学历" prop="education" width="80"/>
+                    <el-table-column label="意向城市" prop="city" width="100"/>
+                    <el-table-column label="档案">
+                      <template #default="{ row }">
+                        <el-tag :type="row.profileComplete ? 'success' : 'info'" size="small">
+                          {{ row.profileComplete ? '已完善' : '未完善' }}
+                        </el-tag>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="积分" prop="points" width="80"/>
+                    <el-table-column label="注册时间" prop="registerAt"/>
+                    <el-table-column label="最后活跃" prop="lastActive"/>
+                  </el-table>
+                  <div style="color:#7d8291;font-size:12px;margin-top:8px">
+                    * 代理仅可查看，不能编辑用户信息、不能修改积分、不能查看其他代理数据。
+                  </div>
+                </div>
+              </template>
+
+            </div>
+          </main>
+        </div>
+      `
+    };
+
+    const app = createApp(App);
+    app.use(ElementPlus);
+    for (const [name, comp] of Object.entries(ElementPlusIconsVue)) {
+      app.component(name, comp);
+    }
+    app.mount('#app');
+  </script>
+</body>
+</html>
